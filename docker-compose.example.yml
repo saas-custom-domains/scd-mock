@@ -1,0 +1,40 @@
+# Example: run a sample app behind scd-mock.
+#
+#   docker compose -f docker-compose.example.yml up
+#
+# Then open http://acme.localhost/ (browsers and curl resolve *.localhost to
+# 127.0.0.1). The request goes through scd-mock's proxy to the app with the
+# same headers production adds (X-Served-For, X-SaaS-Domains-Auth-Token, ...).
+services:
+  app:
+    # Replace with your sample app. It should listen on port 3000.
+    image: ghcr.io/your-org/your-sample-app:latest
+    environment:
+      # API calls from the app go to the mock instead of app.saascustomdomains.com.
+      SCD_API_BASE_URL: http://scd-mock:4010/api/v1
+      SCD_API_TOKEN: scd_test_token
+      SCD_ACCOUNT_UUID: acc_local
+      SCD_UPSTREAM_UUID: upstream_local
+      # Compare against X-SaaS-Domains-Auth-Token on forwarded requests.
+      PROXY_AUTH_TOKEN: local_proxy_token
+      # Compare against the `token` query param on incoming webhooks.
+      SCD_WEBHOOK_TOKEN: local_webhook_token
+    ports:
+      - "3000:3000"
+
+  scd-mock:
+    image: ghcr.io/saas-custom-domains/scd-mock:latest
+    environment:
+      # The seeded upstream points at the app service. Use host.docker.internal
+      # instead if the app runs on your machine rather than in compose.
+      SCD_MOCK_UPSTREAM_HOST: app
+      SCD_MOCK_UPSTREAM_PORT: "3000"
+      SCD_MOCK_UPSTREAM_AUTH_TOKEN: local_proxy_token
+      # Ready to use on startup, no DNS wait.
+      SCD_MOCK_DOMAINS: acme.localhost
+      SCD_MOCK_WEBHOOK_URL: http://app:3000/webhooks/saas-custom-domains
+    ports:
+      - "4010:4010" # API
+      - "80:4080"   # proxy, so custom domains work without a port
+    depends_on:
+      - app
