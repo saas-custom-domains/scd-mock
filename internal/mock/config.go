@@ -32,6 +32,9 @@ type Config struct {
 
 	ForwardHost bool // X-Forwarded-Host = custom domain instead of upstream host
 	KeepHost    bool // pass the client's Host header through unchanged
+	// ForwardedProto is the X-Forwarded-Proto value: "https" like
+	// production, or "http" to match the mock's own plain-HTTP listener.
+	ForwardedProto string
 }
 
 // ConfigFromEnv reads the configuration using getenv (usually os.Getenv).
@@ -71,6 +74,11 @@ func ConfigFromEnv(getenv func(string) string) (Config, error) {
 		WebhookBackoff:    time.Second,
 		ForwardHost:       boolean("SCD_MOCK_FORWARD_HOST", false),
 		KeepHost:          boolean("SCD_MOCK_KEEP_HOST", false),
+		ForwardedProto:    str("SCD_MOCK_FORWARDED_PROTO", "https"),
+	}
+
+	if cfg.ForwardedProto != "https" && cfg.ForwardedProto != "http" {
+		errs = append(errs, "SCD_MOCK_FORWARDED_PROTO: must be https or http")
 	}
 
 	port, err := strconv.Atoi(str("SCD_MOCK_UPSTREAM_PORT", "3000"))

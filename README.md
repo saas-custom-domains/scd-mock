@@ -69,6 +69,7 @@ All settings are environment variables.
 | `SCD_MOCK_WEBHOOK_TOKEN` | `local_webhook_token` | Added to the webhook URL as the `token` query param. |
 | `SCD_MOCK_FORWARD_HOST` | `false` | Set `X-Forwarded-Host` to the custom domain instead of the upstream host. |
 | `SCD_MOCK_KEEP_HOST` | `false` | Pass the client's `Host` header through to the upstream instead of replacing it. |
+| `SCD_MOCK_FORWARDED_PROTO` | `https` | Value of `X-Forwarded-Proto`. Production always sends `https`. Set `http` when your app compares the browser's origin with its own scheme (CSRF checks in Rails, Django, SvelteKit) and you test over the mock's plain-HTTP port. |
 
 ## API
 
@@ -148,7 +149,7 @@ Forwarded requests carry these headers. Any copies the client sent are removed f
 | `X-SaaS-Domains-IP` | Client IP. |
 | `X-SaaS-Domains-Auth-Token` | The upstream's `auth_token`. |
 | `X-Forwarded-For` | Client IP. |
-| `X-Forwarded-Proto` | Always `https`, because production terminates TLS before your app. |
+| `X-Forwarded-Proto` | `https`, because production terminates TLS before your app. `SCD_MOCK_FORWARDED_PROTO=http` changes it for local testing. |
 | `X-Forwarded-Host` | Same as `Host` by default. The custom domain if `SCD_MOCK_FORWARD_HOST=true`. |
 
 If the domain has a `prepend_path`, it is added in front of the request path: with `prepend_path` `sites/client1`, `/about` is forwarded as `/sites/client1/about`.
@@ -248,7 +249,7 @@ curl -s --resolve shop.example.com:4080:127.0.0.1 http://shop.example.com:4080/
 
 scd-mock covers what most integrations use. It is not a full copy of production.
 
-- **No TLS.** The proxy speaks plain HTTP. Production terminates TLS and issues certificates; the mock only flips `tls_certificate_issued`. `X-Forwarded-Proto` is still `https` so your app behaves as it would in production.
+- **No TLS.** The proxy speaks plain HTTP. Production terminates TLS and issues certificates; the mock only flips `tls_certificate_issued`. `X-Forwarded-Proto` is still `https` by default so your app behaves as it would in production; set `SCD_MOCK_FORWARDED_PROTO=http` if a CSRF check compares schemes and you browse the mock over plain HTTP.
 - **Simulated DNS.** No DNS lookups happen. A domain is valid if its host ends in `.localhost`, matches `SCD_MOCK_VALID_HOSTS`, or was set with `/_mock/domains/:host/dns`. Production checks for a CNAME to `in.saascustomdomains.com` (or A records) on a schedule; the mock checks once after `SCD_MOCK_DNS_DELAY` and on `verify_dns_records`.
 - **Unknown and inactive domains.** The mock answers `404 Unknown custom domain` and `421` with a short explanation. In production these requests do not reach your app either, but the failure looks different (usually a TLS error, since no certificate is issued).
 - **Status stays invalid.** Once a domain is `dns_records_not_found`, the proxy stops forwarding to it until it is valid again. `tls_certificate_issued` stays `true` once set, like production.

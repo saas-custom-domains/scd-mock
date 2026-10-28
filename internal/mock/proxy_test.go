@@ -121,6 +121,15 @@ func TestProxyHostFlags(t *testing.T) {
 	}
 }
 
+func TestProxyForwardedProto(t *testing.T) {
+	up, ch := echoUpstream(t)
+	h := proxyHarness(t, up, func(c *Config) { c.ForwardedProto = "http" })
+	h.viaProxy("acme.localhost:4080", "/", nil)
+	if v := receive(t, ch).header.Get("X-Forwarded-Proto"); v != "http" {
+		t.Errorf("SCD_MOCK_FORWARDED_PROTO: X-Forwarded-Proto = %q", v)
+	}
+}
+
 func TestProxyPrependPath(t *testing.T) {
 	up, ch := echoUpstream(t)
 	h := proxyHarness(t, up, nil)

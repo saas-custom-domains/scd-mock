@@ -101,7 +101,7 @@ func (s *Server) rewrite(pr *httputil.ProxyRequest) {
 	h.Set("X-Served-For", rt.requestHost)
 	h.Set("X-SaaS-Domains-IP", clientIP)
 	h.Set("X-SaaS-Domains-Auth-Token", up.AuthToken)
-	h.Set("X-Forwarded-Proto", "https")
+	h.Set("X-Forwarded-Proto", s.cfg.ForwardedProto)
 	h.Set("X-Forwarded-For", clientIP)
 	h.Set("X-Forwarded-Host", upstreamHost)
 	if s.cfg.ForwardHost {
