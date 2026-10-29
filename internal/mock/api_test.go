@@ -62,7 +62,7 @@ func TestSeededUpstream(t *testing.T) {
 	m := h.mustCall(200, "GET", base+"/upstreams/upstream_local", nil)
 	want := map[string]any{
 		"uuid": "upstream_local", "host": "localhost", "port": float64(3000), "tls": false,
-		"auth_token": "local_proxy_token", "bubble_io": false, "compression_enabled": false,
+		"auth_token": "local_proxy_token", "bubble_io": false, "compression_enabled": true,
 		"geocoding_enabled": false, "account_uuid": "acc_local",
 	}
 	for k, v := range want {
@@ -79,7 +79,8 @@ func TestUpstreamCRUD(t *testing.T) {
 	if !upstreamUUIDRe.MatchString(uuid) {
 		t.Errorf("uuid %q does not look like upstream_xxxxxxxx", uuid)
 	}
-	if up["host"] != "app.mysaas.com" || up["port"] != float64(443) || up["tls"] != true {
+	if up["host"] != "app.mysaas.com" || up["port"] != float64(443) || up["tls"] != true ||
+		up["compression_enabled"] != true || up["geocoding_enabled"] != false || up["bubble_io"] != false {
 		t.Errorf("defaults wrong: %v", up)
 	}
 	if tok, _ := up["auth_token"].(string); !regexp.MustCompile(`^[0-9a-f]{32}$`).MatchString(tok) {

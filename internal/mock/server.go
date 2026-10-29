@@ -49,7 +49,7 @@ func (s *Server) seedState() ([]*Upstream, []*Domain, error) {
 	up := &Upstream{
 		UUID: s.cfg.UpstreamUUID, AccountUUID: s.cfg.AccountUUID,
 		Host: normalizeHost(s.cfg.UpstreamHost), Port: s.cfg.UpstreamPort, TLS: s.cfg.UpstreamTLS,
-		AuthToken: s.cfg.UpstreamAuthToken, CreatedAt: now, UpdatedAt: now,
+		AuthToken: s.cfg.UpstreamAuthToken, CompressionEnabled: true, CreatedAt: now, UpdatedAt: now,
 	}
 	if !validHostname(up.Host) {
 		return nil, nil, fmt.Errorf("SCD_MOCK_UPSTREAM_HOST %q is not a valid hostname", s.cfg.UpstreamHost)
@@ -256,7 +256,7 @@ func (s *Server) createUpstream(r *http.Request, p params) result {
 	}{
 		{"tls", &up.TLS, true},
 		{"bubble_io", &up.BubbleIO, false},
-		{"compression_enabled", &up.CompressionEnabled, false},
+		{"compression_enabled", &up.CompressionEnabled, true},
 		{"geocoding_enabled", &up.GeocodingEnabled, false},
 	} {
 		if *b.dst, err = p.boolean(b.key, b.def); err != nil {
